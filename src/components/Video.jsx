@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useMemo } from "react";
 
 /** === 配置 === */
-const TOTAL_FRAMES = 100;            // ← 帧总数
+const TOTAL_FRAMES = 50;            // ← 帧总数
 const BASE_PATH = "/videoimages";    // ← public 下的目录，如 public/videoimages
 const SHOW_HUD = true;               // ← 调试开关：左上角显示 progress & frame
 
