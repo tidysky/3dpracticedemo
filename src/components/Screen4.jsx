@@ -26,7 +26,7 @@ import { Parkmodel } from './Parkmodel';
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
 
 import { Bear } from './bear';
-import { Wolf } from './wolf';
+import { Wolf } from './Wolf';
 
 import * as THREE from 'three';
 import { Men } from './man';
