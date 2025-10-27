@@ -26,7 +26,7 @@ import { useControls } from "leva";
 
 import * as THREE from 'three';
 
-import VideoScrollScene from './components/video';
+import VideoScrollScene from './components/Video';
 import Screen2 from './components/Screen2';
 import Screen3 from './components/Screen3';
 import Screen4 from './components/Screen4';
