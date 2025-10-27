@@ -1,12 +1,12 @@
 import React, { useRef, useEffect, useState, useMemo } from "react";
 
 /** === 配置 === */
-const TOTAL_FRAMES = 215;            // ← 帧总数
+const TOTAL_FRAMES = 100;            // ← 帧总数
 const BASE_PATH = "/videoimages";    // ← public 下的目录，如 public/videoimages
 const SHOW_HUD = true;               // ← 调试开关：左上角显示 progress & frame
 
 // 根据帧号（1-based）生成文件路径：images1.jpg … images215.jpg
-const makeSrc = (i) => `${BASE_PATH}/images${i}.jpg`;
+const makeSrc = (i) => `${BASE_PATH}/images${i}.webp`;
 
 /** 轻量预热前几帧，减少首屏白屏 */
 function useWarmup(warmCount = 8) {
