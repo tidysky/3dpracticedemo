@@ -106,12 +106,10 @@ export default function App(){
         {(bind) => (
           <>
           <div {...bind} ref={scrollContentRef}>
-             
             <VideoScrollScene />
             <Screen3 />
             <Screen4 />
             {/* <Screen2 /> */}
-            
             <Screen5 />
             <br />
             <br />
