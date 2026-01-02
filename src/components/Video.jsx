@@ -76,11 +76,11 @@ export default function VideoScrollScene() {
       >
         {/* 你的标题层，保持不变 */}
         <div
-          className="text-white w-[50vw] h-auto absolute top-1/2 left-1/2
-          -translate-x-1/2 -translate-y-1/2 z-20 text-8xl text-center"
+          className="text-white w-full max-w-4xl h-auto absolute top-1/2 left-1/2
+          -translate-x-1/2 -translate-y-1/2 z-20 px-4 text-center text-4xl md:text-8xl lg:text-9xl"
           style={{ pointerEvents: "none" }}
         >
-          <h1>Welcome</h1>
+          <h1 className="w-full mx-auto text-center">Welcome</h1>
         </div>
 
         {/* 序列帧：原生 <img>，不进 Canvas，确保流畅 */}
