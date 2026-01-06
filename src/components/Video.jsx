@@ -14,6 +14,10 @@ function useWarmup(warmCount = 8) {
     for (let i = 1; i <= Math.min(warmCount, TOTAL_FRAMES); i++) {
       const img = new Image();
       img.src = makeSrc(i);
+      // fallback to jpg if webp not supported / fails to load on some mobile browsers
+      img.onerror = () => {
+        img.src = makeSrc(i).replace('.webp', '.jpg');
+      };
     }
   }, [warmCount]);
 }
@@ -42,11 +46,19 @@ function useSectionProgress(sectionRef) {
 
 export default function VideoScrollScene() {
   const sectionRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   // 这段 250vh 的滚动进度（与任何滚动实现兼容）
   const progress = useSectionProgress(sectionRef);
 
   useWarmup();
+
+  // detect simple mobile user agents to provide a fixed fallback for sticky
+  useEffect(() => {
+    if (typeof navigator !== 'undefined') {
+      setIsMobile(/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent));
+    }
+  }, []);
 
   // 把 0~1 的 progress 映射到 1..TOTAL_FRAMES（向最近帧取整，前进/后退都顺）
   const frameIndex = useMemo(() => {
@@ -64,14 +76,19 @@ export default function VideoScrollScene() {
       {/* sticky 一屏：滚动时固定在视窗，按 progress 切帧 */}
       <div
         style={{
-          position: "sticky",
+          // Some smooth-scroll implementations use transforms on ancestor elements,
+          // which breaks `position: sticky` on mobile browsers. Use `fixed` as a
+          // safe fallback for small devices.
+          position: isMobile ? 'fixed' : 'sticky',
           top: 0,
+          left: 0,
           height: "100vh",
           width: "100%",
           overflow: "hidden",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
+          zIndex: 10,
         }}
       >
         {/* 你的标题层，保持不变 */}
@@ -90,6 +107,13 @@ export default function VideoScrollScene() {
           style={{ width: "100vw", height: "100vh", objectFit: "cover", display: "block" }}
           draggable={false}
           onDragStart={(e) => e.preventDefault()}
+          // fallback to .jpg for mobile Safari that lacks WebP support
+          onError={(e) => {
+            const el = e.currentTarget;
+            if (el && el.src && el.src.endsWith('.webp')) {
+              el.src = el.src.replace('.webp', '.jpg');
+            }
+          }}
         />
 
         {/* 调试 HUD（确认滚动绑定 OK，确认后可将 SHOW_HUD 设为 false） */}
