@@ -33,7 +33,7 @@ export default function Screen5() {
 
   return (
     <section style={{ position: 'relative', height: '10vh' }}>
-        <div ref={el} style={{ position: 'sticky', top: '0', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div data-final-screen ref={el} style={{ position: 'sticky', top: '0', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <motion.div style={{ opacity,textAlign: 'center',color:'#ffffff'}}>
             <h1 className='text-7xl'>Thank you for Watching</h1>
         </motion.div>

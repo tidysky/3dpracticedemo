@@ -1,25 +1,91 @@
 import React, { useRef, useEffect, useState, useMemo } from "react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { TOTAL_FRAMES, makeFrameSrc } from "../framePreloader";
 
-/** === 配置 === */
-const TOTAL_FRAMES = 50;            // ← 帧总数
-const BASE_PATH = "/videoimages";    // ← public 下的目录，如 public/videoimages
-const SHOW_HUD = true;               // ← 调试开关：左上角显示 progress & frame
+gsap.registerPlugin(useGSAP);
 
-// 根据帧号（1-based）生成文件路径：images1.jpg … images215.jpg
-const makeSrc = (i) => `${BASE_PATH}/images${i}.webp`;
+function ScrollHint({ hidden }) {
+  const hintRef = useRef(null);
 
-/** 轻量预热前几帧，减少首屏白屏 */
-function useWarmup(warmCount = 8) {
-  useEffect(() => {
-    for (let i = 1; i <= Math.min(warmCount, TOTAL_FRAMES); i++) {
-      const img = new Image();
-      img.src = makeSrc(i);
-      // fallback to jpg if webp not supported / fails to load on some mobile browsers
-      img.onerror = () => {
-        img.src = makeSrc(i).replace('.webp', '.jpg');
-      };
-    }
-  }, [warmCount]);
+  useGSAP(() => {
+    const media = gsap.matchMedia();
+
+    media.add(
+      {
+        allowMotion: "(prefers-reduced-motion: no-preference)",
+        reduceMotion: "(prefers-reduced-motion: reduce)",
+      },
+      ({ conditions }) => {
+        gsap.to(hintRef.current, {
+          autoAlpha: hidden ? 0 : 1,
+          duration: conditions.reduceMotion ? 0 : 0.35,
+          ease: "power2.out",
+          overwrite: "auto",
+        });
+
+        if (!hidden && !conditions.reduceMotion) {
+          gsap.fromTo(
+            ".scroll-hint-arrow",
+            { y: -2, autoAlpha: 0.45 },
+            {
+              y: 7,
+              autoAlpha: 1,
+              duration: 0.9,
+              ease: "sine.inOut",
+              repeat: -1,
+              yoyo: true,
+            },
+          );
+        }
+      },
+    );
+
+    return () => media.revert();
+  }, { dependencies: [hidden], scope: hintRef, revertOnUpdate: true });
+
+  return (
+    <div
+      ref={hintRef}
+      style={{
+        position: "fixed",
+        left: "50%",
+        bottom: "5vh",
+        transform: "translateX(-50%)",
+        zIndex: 30,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "8px",
+        color: "rgba(255,255,255,0.92)",
+        fontFamily: "system-ui, sans-serif",
+        fontSize: "12px",
+        fontWeight: 600,
+        letterSpacing: "0.16em",
+        textTransform: "uppercase",
+        textShadow: "0 1px 8px rgba(0,0,0,0.55)",
+        pointerEvents: "none",
+      }}
+    >
+      <span>Scroll to explore</span>
+      <svg
+        className="scroll-hint-arrow"
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M5 9.5 12 16.5 19 9.5"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </div>
+  );
 }
 
 /** 用 RAF 从 DOM 计算这段 section 的滚动进度（0~1） */
@@ -47,11 +113,10 @@ function useSectionProgress(sectionRef) {
 export default function VideoScrollScene() {
   const sectionRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [isFinalScreenVisible, setIsFinalScreenVisible] = useState(false);
 
   // 这段 250vh 的滚动进度（与任何滚动实现兼容）
   const progress = useSectionProgress(sectionRef);
-
-  useWarmup();
 
   // detect simple mobile user agents to provide a fixed fallback for sticky
   useEffect(() => {
@@ -60,13 +125,26 @@ export default function VideoScrollScene() {
     }
   }, []);
 
+  useEffect(() => {
+    const finalScreen = document.querySelector('[data-final-screen]');
+    if (!finalScreen || typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsFinalScreenVisible(entry.isIntersecting),
+      { threshold: 0.25 },
+    );
+
+    observer.observe(finalScreen);
+    return () => observer.disconnect();
+  }, []);
+
   // 把 0~1 的 progress 映射到 1..TOTAL_FRAMES（向最近帧取整，前进/后退都顺）
   const frameIndex = useMemo(() => {
     const p = Math.min(1, Math.max(0, progress || 0));
     return Math.min(TOTAL_FRAMES, Math.max(1, Math.round(p * (TOTAL_FRAMES - 1)) + 1));
   }, [progress]);
 
-  const src = makeSrc(frameIndex);
+  const src = makeFrameSrc(frameIndex);
 
   return (
     <section
@@ -116,28 +194,7 @@ export default function VideoScrollScene() {
           }}
         />
 
-        {/* 调试 HUD（确认滚动绑定 OK，确认后可将 SHOW_HUD 设为 false） */}
-        {false && (
-          <div
-            style={{
-              position: "absolute",
-              left: 12,
-              top: 12,
-              padding: "6px 10px",
-              background: "rgba(0,0,0,0.6)",
-              color: "#fff",
-              borderRadius: 6,
-              fontFamily: "system-ui, sans-serif",
-              fontSize: 12,
-              zIndex: 9999,
-              pointerEvents: "none",
-            }}
-          >
-            <div style={{ fontWeight: 700, marginBottom: 6 }}>frame {frameIndex}</div>
-            <div>scroll: {progress.toFixed(3)} | total: {TOTAL_FRAMES}</div>
-            <div style={{ maxWidth: 360, wordBreak: "break-all", opacity: 0.8 }}>{src}</div>
-          </div>
-        )}
+        <ScrollHint hidden={isFinalScreenVisible} />
       </div>
     </section>
   );

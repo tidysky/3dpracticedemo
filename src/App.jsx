@@ -32,6 +32,58 @@ import Screen3 from './components/Screen3';
 import Screen4 from './components/Screen4';
 import Screen5 from './components/screen5';
 import { EffectComposer, Bloom, Autofocus } from "@react-three/postprocessing";
+import { useFramePreloader } from './framePreloader';
+
+function FramePreloader({ progress, failed }) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100vw',
+        height: '100vh',
+        background: '#050505',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        zIndex: 10000,
+        color: '#fff',
+        fontFamily: 'system-ui, sans-serif',
+      }}
+    >
+      <p style={{ margin: '0 0 18px', fontSize: '1.25rem', fontWeight: 600 }}>
+        Loading animation… {progress}%
+      </p>
+      <div
+        style={{
+          width: 'min(280px, 70vw)',
+          height: '6px',
+          background: 'rgba(255,255,255,0.18)',
+          borderRadius: '999px',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            width: `${progress}%`,
+            height: '100%',
+            background: '#ff5b59',
+            borderRadius: 'inherit',
+            transition: 'width 160ms ease-out',
+          }}
+        />
+      </div>
+      {failed > 0 && (
+        <p style={{ marginTop: '12px', fontSize: '0.85rem', opacity: 0.7 }}>
+          {failed} frame{failed === 1 ? '' : 's'} could not be loaded.
+        </p>
+      )}
+    </div>
+  )
+}
 
 function GlobalLoader() {  // ✅ 修改处：新增
   const { active, progress } = useProgress();
@@ -81,6 +133,11 @@ export default function App(){
 
   const eventSource = useRef() 
   const scrollContentRef = useRef(null); 
+  const { ready, progress, failed } = useFramePreloader()
+
+  if (!ready) {
+    return <FramePreloader progress={progress} failed={failed} />
+  }
 
 
   return (
